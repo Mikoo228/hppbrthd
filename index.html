@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Днем Рождения!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Экран 1: Матрица сердечек */
+        #matrix-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .birthday-text {
+            font-size: 4em;
+            color: white;
+            text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,105,180,0.8);
+            z-index: 2;
+            animation: pulse 2s ease-in-out infinite;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Экран 2: Шарики и плеер */
+        .balloon-btn {
+            padding: 20px 40px;
+            font-size: 1.5em;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+            z-index: 10;
+            margin-top: 20px;
+        }
+
+        .balloon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            width: 60px;
+            height: 80px;
+            border-radius: 50% 50% 50% 50%;
+            animation: float 4s ease-in forwards;
+            cursor: pointer;
+        }
+
+        @keyframes float {
+            to {
+                transform: translateY(-120vh) rotate(20deg);
+                opacity: 0;
+            }
+        }
+
+        /* Музыкальный плеер */
+        .music-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.3s;
+            min-width: 250px;
+        }
+
+        .music-player.collapsed {
+            min-width: auto;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .music-player.collapsed .playlist,
+        .music-player.collapsed .controls {
+            display: none;
+        }
+
+        .current-song {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .playlist {
+            list-style: none;
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .playlist li {
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.2s;
+            font-size: 0.9em;
+        }
+
+        .playlist li:hover {
+            background: #f0f0f0;
+        }
+
+        .playlist li.active {
+            background: #e0d4f7;
+            color: #764ba2;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .controls button {
+            background: #764ba2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .toggle-player {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #764ba2;
+        }
+
+        /* Экран 3: Торт и карточки */
+        .cake-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        .cake {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #f4a460 0%, #d2691e 100%);
+            border-radius: 20px 20px 40px 40px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .candle {
+            position: absolute;
+            width: 20px;
+            height: 60px;
+            background: linear-gradient(to right, #ff6b6b, #ff8e53);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .candle:nth-child(1) { top: -40px; left: 50px; }
+        .candle:nth-child(2) { top: -50px; left: 100px; height: 70px; }
+        .candle:nth-child(3) { top: -40px; left: 150px; }
+        .candle:nth-child(4) { top: -30px; left: 200px; height: 50px; }
+        .candle:nth-child(5) { top: -45px; left: 250px; height: 65px; }
+
+        .flame {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 15px;
+            height: 25px;
+            background: radial-gradient(ellipse at center, #ffd700 0%, #ff8c00 70%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: flicker 0.5s ease-in-out infinite alternate;
+            transition: opacity 0.3s;
+        }
+
+        @keyframes flicker {
+            0% { transform: translateX(-50%) scale(1) rotate(-2deg); }
+            100% { transform: translateX(-50%) scale(1.1) rotate(2deg); }
+        }
+
+        .flame.out {
+            opacity: 0;
+        }
+
+        .explode-btn {
+            padding: 15px 30px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255,71,87,0.5);
+            transition: transform 0.3s;
+            z-index: 10;
+        }
+
+        .explode-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Карточки мемов */
+        .cards-container {
+            display: none;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 900px;
+            perspective: 1000px;
+        }
+
+        .card {
+            width: 150px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .card-front {
+            background: white;
+            overflow: hidden;
+        }
+
+        .card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: rotateY(180deg);
+            padding: 15px;
+            font-size: 0.9em;
+            text-align: center;
+            flex-direction: column;
+        }
+
+        .next-btn {
+            display: none;
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: #2ed573;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.3em;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+
+        /* Экран 4: Конверт */
+        .envelope-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .envelope-container:hover {
+            transform: scale(1.05);
+        }
+
+        .envelope {
+            width: 100%;
+            height: 100%;
+            background: #ff6b9d;
+            position: relative;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: #ff8fab;
+            clip-path: polygon(0 0, 50% 100%, 100% 0);
+            transform-origin: top;
+            transition: transform 0.5s;
+            z-index: 2;
+        }
+
+        .envelope.open .envelope-flap {
+            transform: rotateX(180deg);
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #ff4757;
+            clip-path: path('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z');
+            z-index: 3;
+            transition: opacity 0.3s;
+        }
+
+        .envelope.open .heart-seal {
+            opacity: 0;
+        }
+
+        .letter-preview {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            height: 90%;
+            background: white;
+            border-radius: 5px;
+            transition: all 0.5s 0.2s;
+            z-index: 1;
+        }
+
+        .envelope.open .letter-preview {
+            transform: translateX(-50%) translateY(-120%);
+        }
+
+        /* Экран 5: Письмо */
+        .letter-fullscreen {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            height: 80%;
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow-y: auto;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(255,182,193,0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(147,112,219,0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(135,206,250,0.3) 0%, transparent 50%);
+        }
+
+        .letter-content {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .stickers {
+            position: absolute;
+            font-size: 2em;
+            opacity: 0.6;
+        }
+
+        .sticker-1 { top: 20px; left: 20px; transform: rotate(-15deg); }
+        .sticker-2 { top: 20px; right: 20px; transform: rotate(15deg); }
+        .sticker-3 { bottom: 60px; left: 30px; transform: rotate(-10deg); }
+        .sticker-4 { bottom: 80px; right: 30px; transform: rotate(20deg); }
+
+        .close-letter {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #ff6b9d;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .close-letter:hover {
+            transform: rotate(90deg);
+        }
+
+        /* Экран 6: Открытка */
+        .meow-btn {
+            padding: 25px 50px;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            border: none;
+            border-radius: 50px;
+            font-size: 1.5em;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(255,154,158,0.5);
+            transition: transform 0.3s;
+        }
+
+        .meow-btn::before, .meow-btn::after {
+            content: '🐱';
+            position: absolute;
+            top: -20px;
+            font-size: 1.5em;
+        }
+
+        .meow-btn::before { left: 10px; }
+        .meow-btn::after { right: 10px; }
+
+        .meow-btn:hover {
+            transform: scale(1.1) rotate(2deg);
+        }
+
+        .drawing-container {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            height: 80%;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .drawing-container img {
+            max-width: 100%;
+            max-height: 70%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .effort-text {
+            position: absolute;
+            bottom: 80px;
+            right: 40px;
+            font-size: 1.2em;
+            color: rgba(0,0,0,0.3);
+            font-style: italic;
+            transform: rotate(-5deg);
+        }
+
+        .close-drawing {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* Экран 7: Финал */
+        .final-image {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .final-text {
+            font-size: 3em;
+            color: white;
+            text-shadow: 0 0 30px rgba(255,255,255,0.8);
+            text-align: center;
+            font-weight: bold;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 30px rgba(255,255,255,0.8); }
+            to { text-shadow: 0 0 50px rgba(255,215,0,1), 0 0 70px rgba(255,105,180,1); }
+        }
+
+        /* Конфетти */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Экран 1: Матрица сердечек -->
+    <div class="screen active" id="screen1">
+        <canvas id="matrix-canvas"></canvas>
+        <h1 class="birthday-text">С днем рождения, котик!!</h1>
+    </div>
+
+    <!-- Экран 2: Шарики -->
+    <div class="screen" id="screen2">
+        <button class="balloon-btn" onclick="releaseBalloons()">🎈 Запустить шарики!</button>
+        <div id="balloons-container"></div>
+    </div>
+
+    <!-- Музыкальный плеер (сквозной) -->
+    <div class="music-player" id="musicPlayer">
+        <button class="toggle-player" onclick="togglePlayer()">−</button>
+        <div class="current-song" id="currentSong">Выберите песню</div>
+        <ul class="playlist" id="playlist">
+            <li onclick="playSong(0)">🎵 Песня 1</li>
+            <li onclick="playSong(1)">🎵 Песня 2</li>
+            <li onclick="playSong(2)">🎵 Песня 3</li>
+            <li onclick="playSong(3)">🎵 Песня 4</li>
+            <li onclick="playSong(4)">🎵 Песня 5</li>
+            <li onclick="playSong(5)">🎵 Песня 6</li>
+        </ul>
+        <div class="controls">
+            <button onclick="prevSong()">⏮</button>
+            <button onclick="togglePlay()" id="playBtn">▶</button>
+            <button onclick="nextSong()">⏭</button>
+        </div>
+    </div>
+
+    <!-- Экран 3: Торт -->
+    <div class="screen" id="screen3">
+        <div class="cake-container" id="cake">
+            <div class="cake">
+                <div class="candle" onclick="toggleCandle(0)"><div class="flame" id="flame0"></div></div>
+                <div class="candle" onclick="toggleCandle(1)"><div class="flame" id="flame1"></div></div>
+                <div class="candle" onclick="toggleCandle(2)"><div class="flame" id="flame2"></div></div>
+                <div class="candle" onclick="toggleCandle(3)"><div class="flame" id="flame3"></div></div>
+                <div class="candle" onclick="toggleCandle(4)"><div class="flame" id="flame4"></div></div>
+            </div>
+        </div>
+        <button class="explode-btn" id="explodeBtn" onclick="explodeCake()">💥 ЖЕСТЬ</button>
+        
+        <div class="cards-container" id="cardsContainer">
+            <!-- Карточки добавятся через JS -->
+        </div>
+        <button class="next-btn" id="nextBtn" onclick="goToScreen4()">Ехала ➡</button>
+    </div>
+
+    <!-- Экран 4: Конверт -->
+    <div class="screen" id="screen4">
+        <div class="envelope-container" onclick="openEnvelope()">
+            <div class="envelope" id="envelope">
+                <div class="envelope-flap"></div>
+                <div class="heart-seal">❤️</div>
+                <div class="letter-preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран 5: Письмо -->
+    <div class="screen" id="screen5">
+        <div class="letter-fullscreen">
+            <div class="stickers sticker-1">🐱</div>
+            <div class="stickers sticker-2">❤️</div>
+            <div class="stickers sticker-3">🎂</div>
+            <div class="stickers sticker-4">✨</div>
+            
+            <h2 style="text-align: center; color: #764ba2; margin-bottom: 20px;">Моё поздравление</h2>
+            
+            <div class="letter-content" contenteditable="true">
+                <!-- ЗДЕСЬ ПИШИТЕ ВАШ ТЕКСТ -->
+                Дорогой...<br><br>
+                (Нажми сюда и напиши своё поздравление!)
+            </div>
+            
+            <button class="close-letter" onclick="closeLetter()">✕</button>
+        </div>
+    </div>
+
+    <!-- Экран 6: Открытка -->
+    <div class="screen" id="screen6">
+        <button class="meow-btn" onclick="showDrawing()">Мяу 🐾</button>
+        
+        <div class="drawing-container hidden" id="drawingContainer">
+            <img src="" alt="Моя открытка" id="drawingImg" style="display: none;">
+            <div style="font-size: 5em;">🎨</div>
+            <p style="margin-top: 20px; color: #666;">Здесь будет твоя нарисованная открытка</p>
+            <div class="effort-text">я старалась.... очень</div>
+            <button class="close-drawing" onclick="closeDrawing()">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Экран 7: Финал -->
+    <div class="screen" id="screen7">
+        <img src="" alt="Сасавот" class="final-image" id="streamerImg" style="display: none; background: #ddd;">
+        <div style="width: 300px; height: 300px; background: linear-gradient(45deg, #ff6b9d, #c44569); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 5em; margin-bottom: 30px;" id="streamerPlaceholder">
+            🎮
+        </div>
+        <h1 class="final-text">С ЮБИЛЕЕМ, РОДНОЙ!!<br><span style="font-size: 0.6em;">кайфуй от жизни)</span></h1>
+    </div>
+
+    <script>
+        // ==================== НАСТРОЙКИ ====================
+        
+        // Здесь добавьте ссылки на ваши песни (URL или локальные файлы)
+        const songs = [
+            'https://example.com/song1.mp3', // Замените на реальные ссылки
+            'https://example.com/song2.mp3',
+            'https://example.com/song3.mp3',
+            'https://example.com/song4.mp3',
+            'https://example.com/song5.mp3',
+            'https://example.com/song6.mp3'
+        ];
+        
+        // Здесь добавьте ваши мемы (передняя сторона - картинка, задняя - текст)
+        const cardsData = [
+            { img: 'https://via.placeholder.com/150/ff6b6b/ffffff?text=Мем1', text: 'Ты самый лучший!' },
+            { img: 'https://via.placeholder.com/150/4ecdc4/ffffff?text=Мем2', text: 'Обнимашки!' },
+            { img: 'https://via.placeholder.com/150/45b7d1/ffffff?text=Мем3', text: 'Ты котик!' },
+            { img: 'https://via.placeholder.com/150/f9ca24/ffffff?text=Мем4', text: 'Ура!' },
+            { img: 'https://via.placeholder.com/150/6c5ce7/ffffff?text=Мем5', text: 'Люблю!' },
+            { img: 'https://via.placeholder.com/150/a29bfe/ffffff?text=Мем6', text: 'С днюхой!' }
+        ];
+
+        // Ссылка на твою открытку (экран 6)
+        const myDrawingURL = ''; // Вставь сюда ссылку на картинку
+        
+        // Ссылка на фото Сасавота (экран 7)
+        const streamerPhotoURL = ''; // Вставь сюда ссылку на фото
+
+        // ==================== ЛОГИКА ====================
+
+        let currentScreen = 1;
+        let audio = new Audio();
+        let currentSongIndex = -1;
+        let isPlaying = false;
+        let flippedCards = 0;
+
+        // Инициализация матрицы сердечек (Экран 1)
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const hearts = '💖💗💓💕💜💙';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for(let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * -100;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#ff69b4';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = hearts[Math.floor(Math.random() * hearts.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Переходы между экранами
+        setTimeout(() => {
+            goToScreen(2);
+        }, 5000);
+
+        setTimeout(() => {
+            document.querySelector('#screen1 .birthday-text').style.transition = 'opacity 1s';
+            document.querySelector('#screen1 .birthday-text').style.opacity = '0';
+        }, 3000);
+
+        function goToScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen' + num).classList.add('active');
+            currentScreen = num;
+        }
+
+        // Шарики (Экран 2)
+        function releaseBalloons() {
+            const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'];
+            const container = document.getElementById('balloons-container');
+            
+            for(let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const balloon = document.createElement('div');
+                    balloon.className = 'balloon';
+                    balloon.style.left = Math.random() * 100 + '%';
+                    balloon.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    balloon.style.animationDuration = (3 + Math.random() * 2) + 's';
+                    container.appendChild(balloon);
+                    
+                    setTimeout(() => balloon.remove(), 5000);
+                }, i * 100);
+            }
+        }
+
+        // Музыкальный плеер
+        function togglePlayer() {
+            const player = document.getElementById('musicPlayer');
+            player.classList.toggle('collapsed');
+        }
+
+        function playSong(index) {
+            if(currentSongIndex === index && isPlaying) return;
+            
+            currentSongIndex = index;
+            audio.src = songs[index];
+            audio.volume = 0.3;
+            audio.play();
+            isPlaying = true;
+            updatePlaylist();
+            document.getElementById('currentSong').textContent = 'Песня ' + (index + 1);
+            document.getElementById('playBtn').textContent = '⏸';
+        }
+
+        function togglePlay() {
+            if(currentSongIndex === -1) {
+                playSong(0);
+                return;
+            }
+            if(isPlaying) {
+                audio.pause();
+                document.getElementById('playBtn').textContent = '▶';
+            } else {
+                audio.play();
+                document.getElementById('playBtn').textContent = '⏸';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function nextSong() {
+            const next = (currentSongIndex + 1) % songs.length;
+            playSong(next);
+        }
+
+        function prevSong() {
+            const prev = (currentSongIndex - 1 + songs.length) % songs.length;
+            playSong(prev);
+        }
+
+        function updatePlaylist() {
+            document.querySelectorAll('#playlist li').forEach((li, idx) => {
+                li.classList.toggle('active', idx === currentSongIndex);
+            });
+        }
+
+        // Свечи (Экран 3)
+        function toggleCandle(num) {
+            const flame = document.getElementById('flame' + num);
+            flame.classList.toggle('out');
+            
+            // Автозажигание через 2 секунды
+            if(flame.classList.contains('out')) {
+                setTimeout(() => {
+                    flame.classList.remove('out');
+                }, 2000);
+            }
+        }
+
+        function explodeCake() {
+            // Конфетти
+            for(let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 4000);
+            }
+            
+            // Скрываем торт и кнопку, показываем карточки
+            document.getElementById('cake').style.display = 'none';
+            document.getElementById('explodeBtn').style.display = 'none';
+            document.getElementById('cardsContainer').style.display = 'flex';
+            
+            // Создаем карточки
+            cardsData.forEach((card, idx) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.onclick = () => flipCard(cardEl);
+                cardEl.innerHTML = `
+                    <div class="card-face card-front">
+                        <img src="${card.img}" alt="мем">
+                    </div>
+                    <div class="card-face card-back">
+                        ${card.text}
+                    </div>
+                `;
+                document.getElementById('cardsContainer').appendChild(cardEl);
+            });
+        }
+
+        function flipCard(card) {
+            if(card.classList.contains('flipped')) return;
+            card.classList.add('flipped');
+            flippedCards++;
+            
+            if(flippedCards === cardsData.length) {
+                setTimeout(() => {
+                    document.getElementById('nextBtn').style.display = 'block';
+                }, 500);
+            }
+        }
+
+        function goToScreen4() {
+            goToScreen(4);
+        }
+
+        // Конверт (Экран 4)
+        function openEnvelope() {
+            document.getElementById('envelope').classList.add('open');
+            setTimeout(() => {
+                goToScreen(5);
+            }, 1500);
+        }
+
+        // Письмо (Экран 5)
+        function closeLetter() {
+            goToScreen(6);
+        }
+
+        // Открытка (Экран 6)
+        function showDrawing() {
+            if(myDrawingURL) {
+                document.getElementById('drawingImg').src = myDrawingURL;
+                document.getElementById('drawingImg').style.display = 'block';
+                document.querySelector('.drawing-container div').style.display = 'none';
+                document.querySelector('.drawing-container p').style.display = 'none';
+            }
+            document.getElementById('drawingContainer').classList.remove('hidden');
+            document.querySelector('.meow-btn').style.display = 'none';
+        }
+
+        function closeDrawing() {
+            goToScreen(7);
+            if(streamerPhotoURL) {
+                document.getElementById('streamerImg').src = streamerPhotoURL;
+                document.getElementById('streamerImg').style.display = 'block';
+                document.getElementById('streamerPlaceholder').style.display = 'none';
+            }
+        }
+
+        // Адаптация размера canvas
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
